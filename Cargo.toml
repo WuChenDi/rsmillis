@@ -1,0 +1,20 @@
+[package]
+name = "millis"
+version = "1.0.0"
+authors = ["wudi <wuchendi96@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+description = "A tiny Rust library that converts various time formats to milliseconds."
+homepage = "https://github.com/WuChenDi/rsmillis"
+repository = "https://github.com/WuChenDi/rsmillis"
+keywords = ["time", "milliseconds", "ms", "duration", "conversion"]
+categories = ["date-and-time", "parsing"]
+edition = "2024"
+rust-version = "1.85.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+regex = "1.12.2"
+
+[dev-dependencies]
