@@ -39,16 +39,10 @@ const Y: f64 = D * 365.25;
 const MO: f64 = Y / 12.0;
 
 /// Options for formatting milliseconds
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Options {
     /// Set to `true` to use verbose formatting. Defaults to `false`.
     pub long: bool,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Options { long: false }
-    }
 }
 
 /// Represents either a string or number value
@@ -102,9 +96,7 @@ pub fn ms(value: Value, options: Option<Options>) -> Result<Value, String> {
             let result = parse(&s)?;
             Ok(Value::Number(result))
         }
-        Value::Number(n) => {
-            Ok(Value::String(format(n, options)))
-        }
+        Value::Number(n) => Ok(Value::String(format(n, options))),
     }
 }
 
@@ -227,7 +219,7 @@ pub fn format(ms: i64, options: Option<Options>) -> String {
 fn fmt_short(ms: i64) -> String {
     let ms_abs = ms.abs();
     let ms_f64 = ms as f64;
-    
+
     if ms_abs >= Y as i64 {
         format!("{}y", (ms_f64 / Y).round() as i64)
     } else if ms_abs >= MO as i64 {
@@ -251,7 +243,7 @@ fn fmt_short(ms: i64) -> String {
 fn fmt_long(ms: i64) -> String {
     let ms_abs = ms.abs();
     let ms_f64 = ms as f64;
-    
+
     if ms_abs >= Y as i64 {
         plural(ms_f64, ms_abs as f64, Y, "year")
     } else if ms_abs >= MO as i64 {
@@ -275,10 +267,5 @@ fn fmt_long(ms: i64) -> String {
 fn plural(ms: f64, ms_abs: f64, n: f64, name: &str) -> String {
     let is_plural = ms_abs >= n * 1.5;
     let value = (ms / n).round() as i64;
-    format!(
-        "{} {}{}",
-        value,
-        name,
-        if is_plural { "s" } else { "" }
-    )
+    format!("{} {}{}", value, name, if is_plural { "s" } else { "" })
 }

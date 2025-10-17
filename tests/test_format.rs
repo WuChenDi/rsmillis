@@ -1,4 +1,4 @@
-use millis::{format, Options};
+use millis::{Options, format};
 
 // Short format tests
 
@@ -197,21 +197,18 @@ fn long_should_support_weeks() {
         "-1 week"
     );
     assert_eq!(
-        format(-1 * 2 * 7 * 24 * 60 * 60 * 1000, Some(Options { long: true })),
+        format(
+            -1 * 2 * 7 * 24 * 60 * 60 * 1000,
+            Some(Options { long: true })
+        ),
         "-2 weeks"
     );
 }
 
 #[test]
 fn long_should_support_months() {
-    assert_eq!(
-        format(2629800000, Some(Options { long: true })),
-        "1 month"
-    );
-    assert_eq!(
-        format(3155760000, Some(Options { long: true })),
-        "1 month"
-    );
+    assert_eq!(format(2629800000, Some(Options { long: true })), "1 month");
+    assert_eq!(format(3155760000, Some(Options { long: true })), "1 month");
     assert_eq!(
         format(26298000000, Some(Options { long: true })),
         "10 months"
@@ -232,14 +229,8 @@ fn long_should_support_months() {
 
 #[test]
 fn long_should_support_years() {
-    assert_eq!(
-        format(31557600001, Some(Options { long: true })),
-        "1 year"
-    );
-    assert_eq!(
-        format(37869120001, Some(Options { long: true })),
-        "1 year"
-    );
+    assert_eq!(format(31557600001, Some(Options { long: true })), "1 year");
+    assert_eq!(format(37869120001, Some(Options { long: true })), "1 year");
     assert_eq!(
         format(315576000001, Some(Options { long: true })),
         "10 years"

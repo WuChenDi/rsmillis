@@ -1,4 +1,4 @@
-use millis::{ms, Options, Value};
+use millis::{Options, Value, ms};
 
 // String input tests
 
@@ -306,30 +306,15 @@ fn number_long_should_support_minutes() {
 
 #[test]
 fn number_long_should_support_hours() {
-    match ms(
-        Value::Number(60 * 60 * 1000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
+    match ms(Value::Number(60 * 60 * 1000), Some(Options { long: true })).unwrap() {
         Value::String(s) => assert_eq!(s, "1 hour"),
         _ => panic!("Expected string"),
     }
-    match ms(
-        Value::Number(60 * 60 * 1200),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
+    match ms(Value::Number(60 * 60 * 1200), Some(Options { long: true })).unwrap() {
         Value::String(s) => assert_eq!(s, "1 hour"),
         _ => panic!("Expected string"),
     }
-    match ms(
-        Value::Number(60 * 60 * 10000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
+    match ms(Value::Number(60 * 60 * 10000), Some(Options { long: true })).unwrap() {
         Value::String(s) => assert_eq!(s, "10 hours"),
         _ => panic!("Expected string"),
     }
@@ -416,12 +401,7 @@ fn number_long_should_support_years() {
         Value::String(s) => assert_eq!(s, "1 year"),
         _ => panic!("Expected string"),
     }
-    match ms(
-        Value::Number(315576000001),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
+    match ms(Value::Number(315576000001), Some(Options { long: true })).unwrap() {
         Value::String(s) => assert_eq!(s, "10 years"),
         _ => panic!("Expected string"),
     }
