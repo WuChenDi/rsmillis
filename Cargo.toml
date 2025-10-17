@@ -1,6 +1,6 @@
 [package]
 name = "millis"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["wudi <wuchendi96@gmail.com>"]
 license = "MIT"
 readme = "README.md"

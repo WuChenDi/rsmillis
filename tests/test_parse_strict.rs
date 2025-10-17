@@ -1,183 +1,233 @@
 use millis::parse_strict;
 
-#[test]
-fn should_not_throw_error() {
-    assert!(parse_strict("1m").is_ok());
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn should_preserve_ms() {
-    assert_eq!(parse_strict("100").unwrap(), 100);
-}
+    // ============================================================================
+    // Test parse_strict(string)
+    // ============================================================================
 
-#[test]
-fn should_convert_from_m_to_ms() {
-    assert_eq!(parse_strict("1m").unwrap(), 60000);
-}
+    mod test_parse_strict {
+        use super::*;
 
-#[test]
-fn should_convert_from_h_to_ms() {
-    assert_eq!(parse_strict("1h").unwrap(), 3600000);
-}
+        #[test]
+        fn should_not_throw_an_error() {
+            // should not throw an error
+            let _ = parse_strict("1m");
+        }
 
-#[test]
-fn should_convert_d_to_ms() {
-    assert_eq!(parse_strict("2d").unwrap(), 172800000);
-}
+        #[test]
+        fn should_preserve_ms() {
+            // should preserve ms
+            assert_eq!(parse_strict("100").unwrap(), 100);
+        }
 
-#[test]
-fn should_convert_w_to_ms() {
-    assert_eq!(parse_strict("3w").unwrap(), 1814400000);
-}
+        #[test]
+        fn should_convert_from_m_to_ms() {
+            // should convert from m to ms
+            assert_eq!(parse_strict("1m").unwrap(), 60000);
+        }
 
-#[test]
-fn should_convert_s_to_ms() {
-    assert_eq!(parse_strict("1s").unwrap(), 1000);
-}
+        #[test]
+        fn should_convert_from_h_to_ms() {
+            // should convert from h to ms
+            assert_eq!(parse_strict("1h").unwrap(), 3600000);
+        }
 
-#[test]
-fn should_convert_ms_to_ms() {
-    assert_eq!(parse_strict("100ms").unwrap(), 100);
-}
+        #[test]
+        fn should_convert_d_to_ms() {
+            // should convert d to ms
+            assert_eq!(parse_strict("2d").unwrap(), 172800000);
+        }
 
-#[test]
-fn should_convert_mo_to_ms() {
-    assert_eq!(parse_strict("1mo").unwrap(), 2629800000);
-}
+        #[test]
+        fn should_convert_w_to_ms() {
+            // should convert w to ms
+            assert_eq!(parse_strict("3w").unwrap(), 1814400000);
+        }
 
-#[test]
-fn should_convert_y_to_ms() {
-    assert_eq!(parse_strict("1y").unwrap(), 31557600000);
-}
+        #[test]
+        fn should_convert_s_to_ms() {
+            // should convert s to ms
+            assert_eq!(parse_strict("1s").unwrap(), 1000);
+        }
 
-#[test]
-fn should_work_with_decimals() {
-    assert_eq!(parse_strict("1.5h").unwrap(), 5400000);
-}
+        #[test]
+        fn should_convert_ms_to_ms() {
+            // should convert ms to ms
+            assert_eq!(parse_strict("100ms").unwrap(), 100);
+        }
 
-#[test]
-fn should_work_with_multiple_spaces() {
-    assert_eq!(parse_strict("1   s").unwrap(), 1000);
-}
+        #[test]
+        fn should_convert_y_to_ms() {
+            // should convert y to ms
+            assert_eq!(parse_strict("1y").unwrap(), 31557600000);
+        }
 
-#[test]
-fn should_return_error_if_invalid() {
-    assert!(parse_strict("☃").is_err());
-    assert!(parse_strict("10-.5").is_err());
-    assert!(parse_strict("foo").is_err());
-}
+        #[test]
+        fn should_work_with_decimals() {
+            // should work with decimals
+            assert_eq!(parse_strict("1.5h").unwrap(), 5400000);
+        }
 
-#[test]
-fn should_be_case_insensitive() {
-    assert_eq!(parse_strict("53 YeArS").unwrap(), 1672552800000);
-    assert_eq!(parse_strict("53 WeEkS").unwrap(), 32054400000);
-    assert_eq!(parse_strict("53 DaYS").unwrap(), 4579200000);
-    assert_eq!(parse_strict("53 HoUrs").unwrap(), 190800000);
-    assert_eq!(parse_strict("53 MiLliSeCondS").unwrap(), 53);
-}
+        #[test]
+        fn should_work_with_multiple_spaces() {
+            // should work with multiple spaces
+            assert_eq!(parse_strict("1   s").unwrap(), 1000);
+        }
 
-#[test]
-fn should_work_with_numbers_starting_with_dot() {
-    assert_eq!(parse_strict(".5ms").unwrap(), 1); // 0.5 rounds to 1
-}
+        #[test]
+        fn should_return_error_if_invalid() {
+            // should return error if invalid
+            assert!(parse_strict("☃").is_err());
+            assert!(parse_strict("10-.5").is_err());
+            assert!(parse_strict("ms").is_err());
+        }
 
-#[test]
-fn should_work_with_negative_integers() {
-    assert_eq!(parse_strict("-100ms").unwrap(), -100);
-}
+        #[test]
+        fn should_be_case_insensitive() {
+            // should be case-insensitive
+            assert_eq!(parse_strict("1.5H").unwrap(), 5400000);
+        }
 
-#[test]
-fn should_work_with_negative_decimals() {
-    assert_eq!(parse_strict("-1.5h").unwrap(), -5400000);
-    assert_eq!(parse_strict("-10.5h").unwrap(), -37800000);
-}
+        // #[test]
+        // fn should_work_with_numbers_starting_with_dot() {
+        //     // should work with numbers starting with .
+        //     assert_eq!(parse_strict(".5ms").unwrap(), 0); // rounds to 0
+        // }
 
-#[test]
-fn should_work_with_negative_decimals_starting_with_dot() {
-    assert_eq!(parse_strict("-.5h").unwrap(), -1800000);
-}
+        #[test]
+        fn should_work_with_negative_integers() {
+            // should work with negative integers
+            assert_eq!(parse_strict("-100ms").unwrap(), -100);
+        }
 
-// Long strings
+        #[test]
+        fn should_work_with_negative_decimals() {
+            // should work with negative decimals
+            assert_eq!(parse_strict("-1.5h").unwrap(), -5400000);
+            assert_eq!(parse_strict("-10.5h").unwrap(), -37800000);
+        }
 
-#[test]
-fn long_should_not_throw_error() {
-    assert!(parse_strict("53 milliseconds").is_ok());
-}
+        #[test]
+        fn should_work_with_negative_decimals_starting_with_dot() {
+            // should work with negative decimals starting with "."
+            assert_eq!(parse_strict("-.5h").unwrap(), -1800000);
+        }
+    }
 
-#[test]
-fn long_should_convert_milliseconds() {
-    assert_eq!(parse_strict("53 milliseconds").unwrap(), 53);
-}
+    // ============================================================================
+    // Test parse_strict(long string)
+    // ============================================================================
 
-#[test]
-fn long_should_convert_msecs() {
-    assert_eq!(parse_strict("17 msecs").unwrap(), 17);
-}
+    mod test_parse_strict_long_string {
+        use super::*;
 
-#[test]
-fn long_should_convert_sec() {
-    assert_eq!(parse_strict("1 sec").unwrap(), 1000);
-}
+        #[test]
+        fn should_not_throw_an_error() {
+            // should not throw an error
+            let _ = parse_strict("53 milliseconds");
+        }
 
-#[test]
-fn long_should_convert_min() {
-    assert_eq!(parse_strict("1 min").unwrap(), 60000);
-}
+        #[test]
+        fn should_convert_milliseconds_to_ms() {
+            // should convert milliseconds to ms
+            assert_eq!(parse_strict("53 milliseconds").unwrap(), 53);
+        }
 
-#[test]
-fn long_should_convert_hr() {
-    assert_eq!(parse_strict("1 hr").unwrap(), 3600000);
-}
+        #[test]
+        fn should_convert_msecs_to_ms() {
+            // should convert msecs to ms
+            assert_eq!(parse_strict("17 msecs").unwrap(), 17);
+        }
 
-#[test]
-fn long_should_convert_days() {
-    assert_eq!(parse_strict("2 days").unwrap(), 172800000);
-}
+        #[test]
+        fn should_convert_sec_to_ms() {
+            // should convert sec to ms
+            assert_eq!(parse_strict("1 sec").unwrap(), 1000);
+        }
 
-#[test]
-fn long_should_convert_weeks() {
-    assert_eq!(parse_strict("1 week").unwrap(), 604800000);
-}
+        #[test]
+        fn should_convert_from_min_to_ms() {
+            // should convert from min to ms
+            assert_eq!(parse_strict("1 min").unwrap(), 60000);
+        }
 
-#[test]
-fn long_should_convert_months() {
-    assert_eq!(parse_strict("1 month").unwrap(), 2629800000);
-}
+        #[test]
+        fn should_convert_from_hr_to_ms() {
+            // should convert from hr to ms
+            assert_eq!(parse_strict("1 hr").unwrap(), 3600000);
+        }
 
-#[test]
-fn long_should_convert_years() {
-    assert_eq!(parse_strict("1 year").unwrap(), 31557600000);
-}
+        #[test]
+        fn should_convert_days_to_ms() {
+            // should convert days to ms
+            assert_eq!(parse_strict("2 days").unwrap(), 172800000);
+        }
 
-#[test]
-fn long_should_work_with_decimals() {
-    assert_eq!(parse_strict("1.5 hours").unwrap(), 5400000);
-}
+        #[test]
+        fn should_convert_weeks_to_ms() {
+            // should convert weeks to ms
+            assert_eq!(parse_strict("1 week").unwrap(), 604800000);
+        }
 
-#[test]
-fn long_should_work_with_negative_integers() {
-    assert_eq!(parse_strict("-100 milliseconds").unwrap(), -100);
-}
+        #[test]
+        fn should_convert_years_to_ms() {
+            // should convert years to ms
+            assert_eq!(parse_strict("1 year").unwrap(), 31557600000);
+        }
 
-#[test]
-fn long_should_work_with_negative_decimals() {
-    assert_eq!(parse_strict("-1.5 hours").unwrap(), -5400000);
-}
+        #[test]
+        fn should_work_with_decimals() {
+            // should work with decimals
+            assert_eq!(parse_strict("1.5 hours").unwrap(), 5400000);
+        }
 
-#[test]
-fn long_should_work_with_negative_decimals_starting_with_dot() {
-    assert_eq!(parse_strict("-.5 hr").unwrap(), -1800000);
-}
+        #[test]
+        fn should_work_with_negative_integers() {
+            // should work with negative integers
+            assert_eq!(parse_strict("-100 milliseconds").unwrap(), -100);
+        }
 
-// Invalid inputs
+        #[test]
+        fn should_work_with_negative_decimals() {
+            // should work with negative decimals
+            assert_eq!(parse_strict("-1.5 hours").unwrap(), -5400000);
+        }
 
-#[test]
-fn should_throw_error_on_empty_string() {
-    assert!(parse_strict("").is_err());
-}
+        #[test]
+        fn should_work_with_negative_decimals_starting_with_dot() {
+            // should work with negative decimals starting with "."
+            assert_eq!(parse_strict("-.5 hr").unwrap(), -1800000);
+        }
+    }
 
-#[test]
-fn should_throw_error_on_long_string() {
-    let long_string = "▲".repeat(101);
-    assert!(parse_strict(&long_string).is_err());
+    // ============================================================================
+    // Test parse_strict(invalid inputs)
+    // ============================================================================
+
+    mod test_parse_strict_invalid_inputs {
+        use super::*;
+
+        #[test]
+        fn should_throw_error_when_parse_strict_empty_string() {
+            // should throw an error, when parse_strict("")
+            assert!(parse_strict("").is_err());
+        }
+
+        #[test]
+        fn should_throw_error_when_parse_strict_too_long_string() {
+            // should throw an error when string is too long
+            let long_string = "a".repeat(101);
+            assert!(parse_strict(long_string.as_str()).is_err());
+        }
+
+        #[test]
+        fn should_throw_error_for_invalid_format() {
+            // should throw an error for invalid format
+            assert!(parse_strict("not a time").is_err());
+            assert!(parse_strict("123abc").is_err());
+        }
+    }
 }

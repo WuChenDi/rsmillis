@@ -9,21 +9,19 @@
 //! use millis::{ms, parse, format, Options};
 //!
 //! // Parse time strings
-//! assert_eq!(parse("2h").unwrap(), 7200000);
-//! assert_eq!(parse("1d").unwrap(), 86400000);
-//! assert_eq!(parse("10 seconds").unwrap(), 10000);
+//! let milliseconds = ms("2h").unwrap();
+//! assert_eq!(milliseconds, 7200000);
+//!
+//! let milliseconds = ms("1d").unwrap();
+//! assert_eq!(milliseconds, 86400000);
 //!
 //! // Format milliseconds
-//! assert_eq!(format(60000, None), "1m");
-//! assert_eq!(format(60000, Some(Options { long: true })), "1 minute");
+//! let formatted = ms(60000).unwrap();
+//! assert_eq!(formatted, "1m");
 //!
-//! // Use the unified ms function
-//! use millis::Value;
-//! let result = ms(Value::String("2h".to_string()), None).unwrap();
-//! match result {
-//!     Value::Number(n) => assert_eq!(n, 7200000),
-//!     _ => panic!("Expected number"),
-//! }
+//! // With long format - use format() function
+//! let formatted = format(60000, Some(Options { long: true }));
+//! assert_eq!(formatted, "1 minute");
 //! ```
 
 use regex::Regex;
@@ -45,24 +43,52 @@ pub struct Options {
     pub long: bool,
 }
 
-/// Represents either a string or number value
-#[derive(Debug, Clone)]
-pub enum Value {
-    String(String),
-    Number(i64),
+/// Trait for types that can be converted to/from milliseconds
+pub trait ToMillis {
+    type Output;
+    fn to_millis(self) -> Self::Output;
+}
+
+/// Implementation for &str - converts string to milliseconds
+impl ToMillis for &str {
+    type Output = Result<i64, String>;
+
+    fn to_millis(self) -> Result<i64, String> {
+        parse(self)
+    }
+}
+
+/// Implementation for String - converts string to milliseconds
+impl ToMillis for String {
+    type Output = Result<i64, String>;
+
+    fn to_millis(self) -> Result<i64, String> {
+        parse(&self)
+    }
+}
+
+/// Implementation for i64 - converts milliseconds to formatted string
+impl ToMillis for i64 {
+    type Output = Result<String, String>;
+
+    fn to_millis(self) -> Result<String, String> {
+        Ok(format(self, None))
+    }
 }
 
 /// Parse or format the given value.
 ///
+/// This is a unified interface that can handle both strings (parsing to milliseconds)
+/// and numbers (formatting to time strings). The return type is inferred from the input.
+///
 /// # Arguments
 ///
 /// * `value` - The string or number to convert
-/// * `options` - Options for the conversion
 ///
 /// # Returns
 ///
-/// * `Value::Number` if input was a string (parsed to milliseconds)
-/// * `Value::String` if input was a number (formatted to time string)
+/// * `Result<i64, String>` if input was a string (parsed to milliseconds)
+/// * `Result<String, String>` if input was a number (formatted to time string)
 ///
 /// # Errors
 ///
@@ -71,33 +97,21 @@ pub enum Value {
 /// # Examples
 ///
 /// ```
-/// use millis::{ms, Value, Options};
+/// use millis::ms;
 ///
-/// // Parse string to number
-/// let result = ms(Value::String("2h".to_string()), None).unwrap();
-/// match result {
-///     Value::Number(n) => assert_eq!(n, 7200000),
-///     _ => panic!("Expected number"),
-/// }
+/// // Parse string to milliseconds
+/// let milliseconds = ms("2h").unwrap();
+/// assert_eq!(milliseconds, 7200000);
 ///
-/// // Format number to string
-/// let result = ms(Value::Number(7200000), None).unwrap();
-/// match result {
-///     Value::String(s) => assert_eq!(s, "2h"),
-///     _ => panic!("Expected string"),
-/// }
+/// let milliseconds = ms("1 day").unwrap();
+/// assert_eq!(milliseconds, 86400000);
+///
+/// // Format milliseconds to string
+/// let formatted = ms(7200000).unwrap();
+/// assert_eq!(formatted, "2h");
 /// ```
-pub fn ms(value: Value, options: Option<Options>) -> Result<Value, String> {
-    match value {
-        Value::String(s) => {
-            if s.is_empty() {
-                return Err("Value provided to ms() must be a non-empty string".to_string());
-            }
-            let result = parse(&s)?;
-            Ok(Value::Number(result))
-        }
-        Value::Number(n) => Ok(Value::String(format(n, options))),
-    }
+pub fn ms<T: ToMillis>(value: T) -> T::Output {
+    value.to_millis()
 }
 
 /// Parse the given string and return milliseconds.

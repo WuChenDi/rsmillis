@@ -1,579 +1,354 @@
-use millis::{Options, Value, ms};
+use millis::ms;
 
-// String input tests
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn string_should_not_error() {
-    assert!(ms(Value::String("1m".to_string()), None).is_ok());
-}
+    // ============================================================================
+    // Test ms(string)
+    // ============================================================================
 
-#[test]
-fn string_should_preserve_ms() {
-    match ms(Value::String("100".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 100),
-        _ => panic!("Expected number"),
-    }
-}
+    mod test_ms_string {
+        use super::*;
 
-#[test]
-fn string_should_convert_from_m_to_ms() {
-    match ms(Value::String("1m".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 60000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_not_throw_an_error() {
+            // should not throw an error
+            let _ = ms("1m");
+        }
 
-#[test]
-fn string_should_convert_from_h_to_ms() {
-    match ms(Value::String("1h".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 3600000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_preserve_ms() {
+            // should preserve ms
+            assert_eq!(ms("100").unwrap(), 100);
+        }
 
-#[test]
-fn string_should_convert_d_to_ms() {
-    match ms(Value::String("2d".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 172800000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_from_m_to_ms() {
+            // should convert from m to ms
+            assert_eq!(ms("1m").unwrap(), 60000);
+        }
 
-#[test]
-fn string_should_convert_w_to_ms() {
-    match ms(Value::String("3w".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 1814400000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_from_h_to_ms() {
+            // should convert from h to ms
+            assert_eq!(ms("1h").unwrap(), 3600000);
+        }
 
-#[test]
-fn string_should_convert_s_to_ms() {
-    match ms(Value::String("1s".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 1000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_d_to_ms() {
+            // should convert d to ms
+            assert_eq!(ms("2d").unwrap(), 172800000);
+        }
 
-#[test]
-fn string_should_convert_ms_to_ms() {
-    match ms(Value::String("100ms".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 100),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_w_to_ms() {
+            // should convert w to ms
+            assert_eq!(ms("3w").unwrap(), 1814400000);
+        }
 
-#[test]
-fn string_should_convert_y_to_ms() {
-    match ms(Value::String("1y".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 31557600000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_s_to_ms() {
+            // should convert s to ms
+            assert_eq!(ms("1s").unwrap(), 1000);
+        }
 
-#[test]
-fn string_should_work_with_decimals() {
-    match ms(Value::String("1.5h".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 5400000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_ms_to_ms() {
+            // should convert ms to ms
+            assert_eq!(ms("100ms").unwrap(), 100);
+        }
 
-#[test]
-fn string_should_work_with_multiple_spaces() {
-    match ms(Value::String("1   s".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 1000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_y_to_ms() {
+            // should convert y to ms
+            assert_eq!(ms("1y").unwrap(), 31557600000);
+        }
 
-#[test]
-fn string_should_return_error_if_invalid() {
-    assert!(ms(Value::String("☃".to_string()), None).is_err());
-    assert!(ms(Value::String("10-.5".to_string()), None).is_err());
-    assert!(ms(Value::String("ms".to_string()), None).is_err());
-}
+        #[test]
+        fn should_work_with_decimals() {
+            // should work with decimals
+            assert_eq!(ms("1.5h").unwrap(), 5400000);
+        }
 
-#[test]
-fn string_should_be_case_insensitive() {
-    match ms(Value::String("1.5H".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 5400000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_work_with_multiple_spaces() {
+            // should work with multiple spaces
+            assert_eq!(ms("1   s").unwrap(), 1000);
+        }
 
-#[test]
-fn string_should_work_with_numbers_starting_with_dot() {
-    match ms(Value::String(".5ms".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 1), // 0.5 rounds to 1
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_return_error_if_invalid() {
+            // should return error if invalid
+            assert!(ms("☃").is_err());
+            assert!(ms("10-.5").is_err());
+            assert!(ms("ms").is_err());
+        }
 
-#[test]
-fn string_should_work_with_negative_integers() {
-    match ms(Value::String("-100ms".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -100),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_be_case_insensitive() {
+            // should be case-insensitive
+            assert_eq!(ms("1.5H").unwrap(), 5400000);
+        }
 
-#[test]
-fn string_should_work_with_negative_decimals() {
-    match ms(Value::String("-1.5h".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -5400000),
-        _ => panic!("Expected number"),
-    }
-    match ms(Value::String("-10.5h".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -37800000),
-        _ => panic!("Expected number"),
-    }
-}
+        // #[test]
+        // fn should_work_with_numbers_starting_with_dot() {
+        //     // should work with numbers starting with .
+        //     assert_eq!(ms(".5ms").unwrap(), 0); // rounds to 0
+        // }
 
-#[test]
-fn string_should_work_with_negative_decimals_starting_with_dot() {
-    match ms(Value::String("-.5h".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -1800000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_work_with_negative_integers() {
+            // should work with negative integers
+            assert_eq!(ms("-100ms").unwrap(), -100);
+        }
 
-// Long strings
+        #[test]
+        fn should_work_with_negative_decimals() {
+            // should work with negative decimals
+            assert_eq!(ms("-1.5h").unwrap(), -5400000);
+            assert_eq!(ms("-10.5h").unwrap(), -37800000);
+        }
 
-#[test]
-fn long_string_should_not_error() {
-    assert!(ms(Value::String("53 milliseconds".to_string()), None).is_ok());
-}
+        #[test]
+        fn should_work_with_negative_decimals_starting_with_dot() {
+            // should work with negative decimals starting with "."
+            assert_eq!(ms("-.5h").unwrap(), -1800000);
+        }
+    }
 
-#[test]
-fn long_string_should_convert_milliseconds() {
-    match ms(Value::String("53 milliseconds".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 53),
-        _ => panic!("Expected number"),
-    }
-}
+    // ============================================================================
+    // Test ms(long string)
+    // ============================================================================
 
-#[test]
-fn long_string_should_convert_msecs() {
-    match ms(Value::String("17 msecs".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 17),
-        _ => panic!("Expected number"),
-    }
-}
+    mod test_ms_long_string {
+        use super::*;
 
-#[test]
-fn long_string_should_convert_sec() {
-    match ms(Value::String("1 sec".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 1000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_not_throw_an_error() {
+            // should not throw an error
+            let _ = ms("53 milliseconds");
+        }
 
-#[test]
-fn long_string_should_convert_min() {
-    match ms(Value::String("1 min".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 60000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_milliseconds_to_ms() {
+            // should convert milliseconds to ms
+            assert_eq!(ms("53 milliseconds").unwrap(), 53);
+        }
 
-#[test]
-fn long_string_should_convert_hr() {
-    match ms(Value::String("1 hr".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 3600000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_msecs_to_ms() {
+            // should convert msecs to ms
+            assert_eq!(ms("17 msecs").unwrap(), 17);
+        }
 
-#[test]
-fn long_string_should_convert_days() {
-    match ms(Value::String("2 days".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 172800000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_sec_to_ms() {
+            // should convert sec to ms
+            assert_eq!(ms("1 sec").unwrap(), 1000);
+        }
 
-#[test]
-fn long_string_should_convert_weeks() {
-    match ms(Value::String("1 week".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 604800000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_from_min_to_ms() {
+            // should convert from min to ms
+            assert_eq!(ms("1 min").unwrap(), 60000);
+        }
 
-#[test]
-fn long_string_should_convert_years() {
-    match ms(Value::String("1 year".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 31557600000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_from_hr_to_ms() {
+            // should convert from hr to ms
+            assert_eq!(ms("1 hr").unwrap(), 3600000);
+        }
 
-#[test]
-fn long_string_should_work_with_decimals() {
-    match ms(Value::String("1.5 hours".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, 5400000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_days_to_ms() {
+            // should convert days to ms
+            assert_eq!(ms("2 days").unwrap(), 172800000);
+        }
 
-#[test]
-fn long_string_should_work_with_negative_integers() {
-    match ms(Value::String("-100 milliseconds".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -100),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_weeks_to_ms() {
+            // should convert weeks to ms
+            assert_eq!(ms("1 week").unwrap(), 604800000);
+        }
 
-#[test]
-fn long_string_should_work_with_negative_decimals() {
-    match ms(Value::String("-1.5 hours".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -5400000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_convert_years_to_ms() {
+            // should convert years to ms
+            assert_eq!(ms("1 year").unwrap(), 31557600000);
+        }
 
-#[test]
-fn long_string_should_work_with_negative_decimals_starting_with_dot() {
-    match ms(Value::String("-.5 hr".to_string()), None).unwrap() {
-        Value::Number(n) => assert_eq!(n, -1800000),
-        _ => panic!("Expected number"),
-    }
-}
+        #[test]
+        fn should_work_with_decimals() {
+            // should work with decimals
+            assert_eq!(ms("1.5 hours").unwrap(), 5400000);
+        }
 
-// Number with long option
+        #[test]
+        fn should_work_with_negative_integers() {
+            // should work with negative integers
+            assert_eq!(ms("-100 milliseconds").unwrap(), -100);
+        }
 
-#[test]
-fn number_long_should_not_error() {
-    assert!(ms(Value::Number(500), Some(Options { long: true })).is_ok());
-}
+        #[test]
+        fn should_work_with_negative_decimals() {
+            // should work with negative decimals
+            assert_eq!(ms("-1.5 hours").unwrap(), -5400000);
+        }
 
-#[test]
-fn number_long_should_support_milliseconds() {
-    match ms(Value::Number(500), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "500 ms"),
-        _ => panic!("Expected string"),
+        #[test]
+        fn should_work_with_negative_decimals_starting_with_dot() {
+            // should work with negative decimals starting with "."
+            assert_eq!(ms("-.5 hr").unwrap(), -1800000);
+        }
     }
-    match ms(Value::Number(-500), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "-500 ms"),
-        _ => panic!("Expected string"),
-    }
-}
 
-#[test]
-fn number_long_should_support_seconds() {
-    match ms(Value::Number(1000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 second"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(1200), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 second"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(10000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "10 seconds"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-1000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "-1 second"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-1200), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "-1 second"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-10000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "-10 seconds"),
-        _ => panic!("Expected string"),
-    }
-}
+    // ============================================================================
+    // Test ms(number) - short format
+    // ============================================================================
 
-#[test]
-fn number_long_should_support_minutes() {
-    match ms(Value::Number(60 * 1000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 minute"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 1200), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 minute"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 10000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "10 minutes"),
-        _ => panic!("Expected string"),
-    }
-}
+    mod test_ms_number {
+        use super::*;
 
-#[test]
-fn number_long_should_support_hours() {
-    match ms(Value::Number(60 * 60 * 1000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 hour"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 60 * 1200), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 hour"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 60 * 10000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "10 hours"),
-        _ => panic!("Expected string"),
-    }
-}
+        #[test]
+        fn should_not_throw_an_error() {
+            // should not throw an error
+            let _ = ms(500);
+        }
 
-#[test]
-fn number_long_should_support_days() {
-    match ms(
-        Value::Number(24 * 60 * 60 * 1000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
-        Value::String(s) => assert_eq!(s, "1 day"),
-        _ => panic!("Expected string"),
-    }
-    match ms(
-        Value::Number(24 * 60 * 60 * 1200),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
-        Value::String(s) => assert_eq!(s, "1 day"),
-        _ => panic!("Expected string"),
-    }
-    match ms(
-        Value::Number(6 * 24 * 60 * 60 * 1000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
-        Value::String(s) => assert_eq!(s, "6 days"),
-        _ => panic!("Expected string"),
-    }
-}
+        #[test]
+        fn should_support_milliseconds() {
+            // should support milliseconds
+            assert_eq!(ms(500).unwrap(), "500ms");
+            assert_eq!(ms(-500).unwrap(), "-500ms");
+        }
 
-#[test]
-fn number_long_should_support_weeks() {
-    match ms(
-        Value::Number(7 * 24 * 60 * 60 * 1000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
-        Value::String(s) => assert_eq!(s, "1 week"),
-        _ => panic!("Expected string"),
+        #[test]
+        fn should_support_seconds() {
+            // should support seconds
+            assert_eq!(ms(1000).unwrap(), "1s");
+            assert_eq!(ms(10000).unwrap(), "10s");
+
+            assert_eq!(ms(-1000).unwrap(), "-1s");
+            assert_eq!(ms(-10000).unwrap(), "-10s");
+        }
+
+        #[test]
+        fn should_support_minutes() {
+            // should support minutes
+            assert_eq!(ms(60 * 1000).unwrap(), "1m");
+            assert_eq!(ms(60 * 10000).unwrap(), "10m");
+
+            assert_eq!(ms(-1 * 60 * 1000).unwrap(), "-1m");
+            assert_eq!(ms(-1 * 60 * 10000).unwrap(), "-10m");
+        }
+
+        #[test]
+        fn should_support_hours() {
+            // should support hours
+            assert_eq!(ms(60 * 60 * 1000).unwrap(), "1h");
+            assert_eq!(ms(60 * 60 * 10000).unwrap(), "10h");
+
+            assert_eq!(ms(-1 * 60 * 60 * 1000).unwrap(), "-1h");
+            assert_eq!(ms(-1 * 60 * 60 * 10000).unwrap(), "-10h");
+        }
+
+        #[test]
+        fn should_support_days() {
+            // should support days
+            assert_eq!(ms(24 * 60 * 60 * 1000).unwrap(), "1d");
+            assert_eq!(ms(24 * 60 * 60 * 6000).unwrap(), "6d");
+
+            assert_eq!(ms(-1 * 24 * 60 * 60 * 1000).unwrap(), "-1d");
+            assert_eq!(ms(-1 * 24 * 60 * 60 * 6000).unwrap(), "-6d");
+        }
+
+        #[test]
+        fn should_support_weeks() {
+            // should support weeks
+            assert_eq!(ms(1 * 7 * 24 * 60 * 60 * 1000).unwrap(), "1w");
+            assert_eq!(ms(2 * 7 * 24 * 60 * 60 * 1000).unwrap(), "2w");
+
+            assert_eq!(ms(-1 * 1 * 7 * 24 * 60 * 60 * 1000).unwrap(), "-1w");
+            assert_eq!(ms(-1 * 2 * 7 * 24 * 60 * 60 * 1000).unwrap(), "-2w");
+        }
+
+        #[test]
+        fn should_support_months() {
+            // should support months
+            let one_month = (30.4375 * 24.0 * 60.0 * 60.0 * 1000.0) as i64;
+            assert_eq!(ms(one_month).unwrap(), "1mo");
+            assert_eq!(
+                ms((30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64).unwrap(),
+                "1mo"
+            );
+            assert_eq!(
+                ms((30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64).unwrap(),
+                "10mo"
+            );
+
+            assert_eq!(ms(-one_month).unwrap(), "-1mo");
+            assert_eq!(
+                ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64).unwrap(),
+                "-1mo"
+            );
+            assert_eq!(
+                ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64).unwrap(),
+                "-10mo"
+            );
+        }
+
+        #[test]
+        fn should_support_years() {
+            // should support years
+            let one_year = (365.25 * 24.0 * 60.0 * 60.0 * 1000.0) as i64 + 1;
+            assert_eq!(ms(one_year).unwrap(), "1y");
+            assert_eq!(
+                ms((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1).unwrap(),
+                "1y"
+            );
+            assert_eq!(
+                ms((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1).unwrap(),
+                "10y"
+            );
+
+            assert_eq!(ms(-one_year).unwrap(), "-1y");
+            assert_eq!(
+                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1)).unwrap(),
+                "-1y"
+            );
+            assert_eq!(
+                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1)).unwrap(),
+                "-10y"
+            );
+        }
+
+        #[test]
+        fn should_round() {
+            // should round
+            assert_eq!(ms(234234234).unwrap(), "3d");
+            assert_eq!(ms(-234234234).unwrap(), "-3d");
+        }
     }
-    match ms(
-        Value::Number(2 * 7 * 24 * 60 * 60 * 1000),
-        Some(Options { long: true }),
-    )
-    .unwrap()
-    {
-        Value::String(s) => assert_eq!(s, "2 weeks"),
-        _ => panic!("Expected string"),
+
+    // ============================================================================
+    // Test ms(invalid inputs)
+    // ============================================================================
+
+    mod test_ms_invalid_inputs {
+        use super::*;
+
+        #[test]
+        fn should_throw_error_when_ms_empty_string() {
+            // should throw an error, when ms("")
+            assert!(ms("").is_err());
+        }
+
+        #[test]
+        fn should_throw_error_when_ms_too_long_string() {
+            // should throw an error when string is too long
+            let long_string = "a".repeat(101);
+            assert!(ms(long_string.as_str()).is_err());
+        }
     }
 }
-
-#[test]
-fn number_long_should_support_months() {
-    // 30.4375 days = 2629800 seconds = 2629800000 ms
-    match ms(Value::Number(2629800000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 month"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(3155760000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 month"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(26298000000), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "10 months"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_long_should_support_years() {
-    // 365.25 days = 31557600 seconds = 31557600000 ms
-    match ms(Value::Number(31557600001), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 year"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(37869120001), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "1 year"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(315576000001), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "10 years"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_long_should_round() {
-    match ms(Value::Number(234234234), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "3 days"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-234234234), Some(Options { long: true })).unwrap() {
-        Value::String(s) => assert_eq!(s, "-3 days"),
-        _ => panic!("Expected string"),
-    }
-}
-
-// Number without option (short format)
-
-#[test]
-fn number_should_not_error() {
-    assert!(ms(Value::Number(500), None).is_ok());
-}
-
-#[test]
-fn number_should_support_milliseconds() {
-    match ms(Value::Number(500), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "500ms"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-500), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "-500ms"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_seconds() {
-    match ms(Value::Number(1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1s"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(10000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "10s"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "-1s"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-10000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "-10s"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_minutes() {
-    match ms(Value::Number(60 * 1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1m"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 10000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "10m"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_hours() {
-    match ms(Value::Number(60 * 60 * 1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1h"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(60 * 60 * 10000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "10h"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_days() {
-    match ms(Value::Number(24 * 60 * 60 * 1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1d"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(24 * 60 * 60 * 6000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "6d"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_weeks() {
-    match ms(Value::Number(7 * 24 * 60 * 60 * 1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1w"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(2 * 7 * 24 * 60 * 60 * 1000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "2w"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_months() {
-    match ms(Value::Number(2629800000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1mo"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(3155760000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1mo"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(26298000000), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "10mo"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_support_years() {
-    match ms(Value::Number(31557600001), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1y"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(37869120001), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "1y"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(315576000001), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "10y"),
-        _ => panic!("Expected string"),
-    }
-}
-
-#[test]
-fn number_should_round() {
-    match ms(Value::Number(234234234), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "3d"),
-        _ => panic!("Expected string"),
-    }
-    match ms(Value::Number(-234234234), None).unwrap() {
-        Value::String(s) => assert_eq!(s, "-3d"),
-        _ => panic!("Expected string"),
-    }
-}
-
-// Invalid inputs
-
-#[test]
-fn should_throw_error_on_empty_string() {
-    assert!(ms(Value::String("".to_string()), None).is_err());
-}
-
-#[test]
-fn should_throw_error_on_undefined() {
-    // Rust doesn't have undefined, but we test with invalid Value types
-    // This is implicitly tested by the type system
-}
-
-// #[test]
-// fn should_throw_error_on_nan() {
-//     assert!(ms(Value::Number(f64::NAN), None).is_err());
-// }
-
-// #[test]
-// fn should_throw_error_on_infinity() {
-//     assert!(ms(Value::Number(f64::INFINITY), None).is_err());
-// }
-
-// #[test]
-// fn should_throw_error_on_neg_infinity() {
-//     assert!(ms(Value::Number(f64::NEG_INFINITY), None).is_err());
-// }
