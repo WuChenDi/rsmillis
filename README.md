@@ -10,7 +10,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-millis = "0.1.0"
+millis = "1.0.2"
 ```
 
 ## Usage
