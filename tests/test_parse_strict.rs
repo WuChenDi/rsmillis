@@ -1,3 +1,6 @@
+// parse_strict is deprecated since 2.0.0; keep exercising it until removal.
+#![allow(deprecated)]
+
 use millis::parse_strict;
 
 #[cfg(test)]
