@@ -1,7 +1,14 @@
 //! A tiny Rust library that converts various time formats to milliseconds.
 //!
 //! This library provides functionality to parse time strings into milliseconds
-//! and format milliseconds into human-readable time strings.
+//! and format milliseconds into human-readable time strings. It has zero
+//! runtime dependencies.
+//!
+//! Parsing failures are reported through the [`Error`] enum, which implements
+//! [`std::error::Error`]. Parsing is overflow-checked ([`Error::Overflow`]),
+//! and formatting is infallible for the full `i64` range, including
+//! `i64::MIN` and `i64::MAX`. Use [`parse_duration()`] to parse directly into
+//! a [`std::time::Duration`].
 //!
 //! # Examples
 //!
@@ -15,13 +22,27 @@
 //! let milliseconds = ms("1d").unwrap();
 //! assert_eq!(milliseconds, 86400000);
 //!
-//! // Format milliseconds
+//! // Format milliseconds (infallible, returns String directly)
 //! let formatted = ms(60000);
 //! assert_eq!(formatted, "1m");
 //!
 //! // With long format - use format() function
 //! let formatted = format(60000, Some(Options { long: true }));
 //! assert_eq!(formatted, "1 minute");
+//! ```
+//!
+//! Error handling and `Duration` interop:
+//!
+//! ```
+//! use std::time::Duration;
+//! use millis::{parse, parse_duration, Error};
+//!
+//! assert_eq!(parse(""), Err(Error::Empty));
+//! assert_eq!(parse("abc"), Err(Error::InvalidFormat));
+//! assert_eq!(parse("10000000000y"), Err(Error::Overflow));
+//!
+//! assert_eq!(parse_duration("1.5s").unwrap(), Duration::from_millis(1500));
+//! assert!(parse_duration("-1h").is_err()); // Duration cannot be negative
 //! ```
 
 // Time unit constants in milliseconds
