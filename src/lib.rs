@@ -1,7 +1,14 @@
 //! A tiny Rust library that converts various time formats to milliseconds.
 //!
 //! This library provides functionality to parse time strings into milliseconds
-//! and format milliseconds into human-readable time strings.
+//! and format milliseconds into human-readable time strings. It has zero
+//! runtime dependencies.
+//!
+//! Parsing failures are reported through the [`Error`] enum, which implements
+//! [`std::error::Error`]. Parsing is overflow-checked ([`Error::Overflow`]),
+//! and formatting is infallible for the full `i64` range, including
+//! `i64::MIN` and `i64::MAX`. Use [`parse_duration()`] to parse directly into
+//! a [`std::time::Duration`].
 //!
 //! # Examples
 //!
@@ -15,17 +22,28 @@
 //! let milliseconds = ms("1d").unwrap();
 //! assert_eq!(milliseconds, 86400000);
 //!
-//! // Format milliseconds
-//! let formatted = ms(60000).unwrap();
+//! // Format milliseconds (infallible, returns String directly)
+//! let formatted = ms(60000);
 //! assert_eq!(formatted, "1m");
 //!
 //! // With long format - use format() function
 //! let formatted = format(60000, Some(Options { long: true }));
 //! assert_eq!(formatted, "1 minute");
 //! ```
-
-use regex::Regex;
-use std::sync::OnceLock;
+//!
+//! Error handling and `Duration` interop:
+//!
+//! ```
+//! use std::time::Duration;
+//! use millis::{parse, parse_duration, Error};
+//!
+//! assert_eq!(parse(""), Err(Error::Empty));
+//! assert_eq!(parse("abc"), Err(Error::InvalidFormat));
+//! assert_eq!(parse("10000000000y"), Err(Error::Overflow));
+//!
+//! assert_eq!(parse_duration("1.5s").unwrap(), Duration::from_millis(1500));
+//! assert!(parse_duration("-1h").is_err()); // Duration cannot be negative
+//! ```
 
 // Time unit constants in milliseconds
 const S: f64 = 1000.0;
@@ -35,6 +53,39 @@ const D: f64 = H * 24.0;
 const W: f64 = D * 7.0;
 const Y: f64 = D * 365.25;
 const MO: f64 = Y / 12.0;
+
+/// Errors that can occur when parsing a time string.
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Error {
+    /// The input string is empty.
+    Empty,
+    /// The input string is longer than 100 characters.
+    TooLong,
+    /// The input string is not a valid time string.
+    InvalidFormat,
+    /// The numeric part of the input could not be parsed.
+    InvalidNumber,
+    /// The parsed value does not fit in an `i64` number of milliseconds.
+    Overflow,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Empty => write!(f, "value provided to parse() must not be empty"),
+            Error::TooLong => write!(
+                f,
+                "value provided to parse() must not exceed 100 characters"
+            ),
+            Error::InvalidFormat => write!(f, "invalid time string format"),
+            Error::InvalidNumber => write!(f, "invalid numeric value"),
+            Error::Overflow => write!(f, "value does not fit in an i64 number of milliseconds"),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
 
 /// Options for formatting milliseconds
 #[derive(Debug, Clone, Copy, Default)]
@@ -51,28 +102,31 @@ pub trait ToMillis {
 
 /// Implementation for &str - converts string to milliseconds
 impl ToMillis for &str {
-    type Output = Result<i64, String>;
+    type Output = Result<i64, Error>;
 
-    fn to_millis(self) -> Result<i64, String> {
+    fn to_millis(self) -> Result<i64, Error> {
         parse(self)
     }
 }
 
 /// Implementation for String - converts string to milliseconds
 impl ToMillis for String {
-    type Output = Result<i64, String>;
+    type Output = Result<i64, Error>;
 
-    fn to_millis(self) -> Result<i64, String> {
+    fn to_millis(self) -> Result<i64, Error> {
         parse(&self)
     }
 }
 
-/// Implementation for i64 - converts milliseconds to formatted string
+/// Implementation for i64 - converts milliseconds to formatted string.
+///
+/// This conversion is infallible and never panics, so it returns a plain
+/// `String` rather than a `Result`.
 impl ToMillis for i64 {
-    type Output = Result<String, String>;
+    type Output = String;
 
-    fn to_millis(self) -> Result<String, String> {
-        Ok(format(self, None))
+    fn to_millis(self) -> String {
+        format(self, None)
     }
 }
 
@@ -87,12 +141,13 @@ impl ToMillis for i64 {
 ///
 /// # Returns
 ///
-/// * `Result<i64, String>` if input was a string (parsed to milliseconds)
-/// * `Result<String, String>` if input was a number (formatted to time string)
+/// * `Result<i64, Error>` if input was a string (parsed to milliseconds)
+/// * `String` if input was an `i64` (formatted to a time string; this path
+///   is infallible and never panics)
 ///
 /// # Errors
 ///
-/// Returns an error if the value cannot be parsed or formatted.
+/// String inputs return an error if they cannot be parsed.
 ///
 /// # Examples
 ///
@@ -107,7 +162,7 @@ impl ToMillis for i64 {
 /// assert_eq!(milliseconds, 86400000);
 ///
 /// // Format milliseconds to string
-/// let formatted = ms(7200000).unwrap();
+/// let formatted = ms(7200000);
 /// assert_eq!(formatted, "2h");
 /// ```
 pub fn ms<T: ToMillis>(value: T) -> T::Output {
@@ -131,57 +186,70 @@ pub fn ms<T: ToMillis>(value: T) -> T::Output {
 /// # Examples
 ///
 /// ```
-/// use millis::parse;
+/// use millis::{parse, Error};
 ///
 /// assert_eq!(parse("2h").unwrap(), 7200000);
 /// assert_eq!(parse("1 day").unwrap(), 86400000);
 /// assert_eq!(parse("30 minutes").unwrap(), 1800000);
 /// assert_eq!(parse("-1h").unwrap(), -3600000);
 /// assert!(parse("invalid").is_err());
+/// assert_eq!(parse("10000000000y"), Err(Error::Overflow));
 /// ```
-pub fn parse(s: &str) -> Result<i64, String> {
-    if s.is_empty() || s.len() > 100 {
-        return Err(format!(
-            "Value provided to parse() must be a string with length between 1 and 100. value={:?}",
-            s
-        ));
+pub fn parse(s: &str) -> Result<i64, Error> {
+    if s.is_empty() {
+        return Err(Error::Empty);
+    }
+    if s.len() > 100 {
+        return Err(Error::TooLong);
     }
 
-    static RE: OnceLock<Regex> = OnceLock::new();
-    let re = RE.get_or_init(|| {
-        Regex::new(r"(?i)^(?P<value>-?\d*\.?\d+)\s*(?P<unit>milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|months?|mo|years?|yrs?|y)?$")
-            .unwrap()
-    });
+    // Scan the numeric part: optional leading '-', then digits with at most one '.'.
+    let bytes = s.as_bytes();
+    let mut i = usize::from(bytes[0] == b'-');
+    let mut digits = 0usize;
+    let mut seen_dot = false;
+    while let Some(&b) = bytes.get(i) {
+        match b {
+            b'0'..=b'9' => digits += 1,
+            b'.' if !seen_dot => seen_dot = true,
+            _ => break,
+        }
+        i += 1;
+    }
+    // At least one digit, and the number must end with a digit
+    // (".5" is valid, "5." is not).
+    if digits == 0 || bytes[i - 1] == b'.' {
+        return Err(Error::InvalidFormat);
+    }
 
-    let caps = match re.captures(s) {
-        Some(c) => c,
-        None => return Err(format!("Invalid time string format. value={:?}", s)),
-    };
+    let value: f64 = s[..i].parse().map_err(|_| Error::InvalidNumber)?;
 
-    let value: f64 = match caps["value"].parse() {
-        Ok(v) => v,
-        Err(_) => return Err(format!("Invalid numeric value. value={:?}", s)),
-    };
-
-    let unit = caps
-        .name("unit")
-        .map(|m| m.as_str().to_lowercase())
-        .unwrap_or_else(|| "ms".to_string());
-
-    let multiplier = match unit.as_str() {
-        "years" | "year" | "yrs" | "yr" | "y" => Y,
-        "months" | "month" | "mo" => MO,
-        "weeks" | "week" | "w" => W,
-        "days" | "day" | "d" => D,
-        "hours" | "hour" | "hrs" | "hr" | "h" => H,
-        "minutes" | "minute" | "mins" | "min" | "m" => M,
-        "seconds" | "second" | "secs" | "sec" | "s" => S,
-        "milliseconds" | "millisecond" | "msecs" | "msec" | "ms" => 1.0,
-        _ => return Err(format!("Unknown unit {:?}. value={:?}", unit, s)),
+    // Optional whitespace, then an optional alphabetic unit reaching the end.
+    let unit = s[i..].trim_start();
+    let multiplier = if unit.is_empty() {
+        1.0
+    } else {
+        match unit.to_ascii_lowercase().as_str() {
+            "years" | "year" | "yrs" | "yr" | "y" => Y,
+            "months" | "month" | "mo" => MO,
+            "weeks" | "week" | "w" => W,
+            "days" | "day" | "d" => D,
+            "hours" | "hour" | "hrs" | "hr" | "h" => H,
+            "minutes" | "minute" | "mins" | "min" | "m" => M,
+            "seconds" | "second" | "secs" | "sec" | "s" => S,
+            "milliseconds" | "millisecond" | "msecs" | "msec" | "ms" => 1.0,
+            _ => return Err(Error::InvalidFormat),
+        }
     };
 
     let result = value * multiplier;
-    Ok(result.round() as i64)
+    let rounded = result.round();
+    // `i64::MIN as f64` is exactly -(2^63). `i64::MAX as f64` rounds up to exactly
+    // 2^63, the first value that does not fit, so the upper bound must be strict.
+    if !rounded.is_finite() || rounded < i64::MIN as f64 || rounded >= i64::MAX as f64 {
+        return Err(Error::Overflow);
+    }
+    Ok(rounded as i64)
 }
 
 /// Parse the given string and return milliseconds (strict version).
@@ -191,12 +259,40 @@ pub fn parse(s: &str) -> Result<i64, String> {
 /// # Examples
 ///
 /// ```
+/// # #![allow(deprecated)]
 /// use millis::parse_strict;
 ///
 /// assert_eq!(parse_strict("2h").unwrap(), 7200000);
 /// ```
-pub fn parse_strict(s: &str) -> Result<i64, String> {
+#[deprecated(since = "2.0.0", note = "use parse()")]
+pub fn parse_strict(s: &str) -> Result<i64, Error> {
     parse(s)
+}
+
+/// Parse the given string and return a [`std::time::Duration`].
+///
+/// Accepts the same input as [`parse()`].
+///
+/// # Errors
+///
+/// Returns the same errors as [`parse()`]. Because `Duration` cannot
+/// represent negative spans, inputs that parse to a negative number of
+/// milliseconds return `Err(Error::InvalidFormat)`.
+///
+/// # Examples
+///
+/// ```
+/// use std::time::Duration;
+/// use millis::parse_duration;
+///
+/// assert_eq!(parse_duration("1.5s").unwrap(), Duration::from_millis(1500));
+/// assert_eq!(parse_duration("2h").unwrap(), Duration::from_millis(7200000));
+/// assert!(parse_duration("-1h").is_err());
+/// ```
+pub fn parse_duration(s: &str) -> Result<std::time::Duration, Error> {
+    let ms = parse(s)?;
+    let ms = u64::try_from(ms).map_err(|_| Error::InvalidFormat)?;
+    Ok(std::time::Duration::from_millis(ms))
 }
 
 /// Format the given milliseconds as a string.
@@ -219,6 +315,10 @@ pub fn parse_strict(s: &str) -> Result<i64, String> {
 /// assert_eq!(format(60000, Some(Options { long: true })), "1 minute");
 /// assert_eq!(format(3600000, None), "1h");
 /// assert_eq!(format(-3600000, None), "-1h");
+///
+/// // Extreme values do not panic
+/// assert_eq!(format(i64::MIN, None), "-292271023y");
+/// assert_eq!(format(i64::MAX, None), "292271023y");
 /// ```
 pub fn format(ms: i64, options: Option<Options>) -> String {
     let opts = options.unwrap_or_default();
@@ -229,51 +329,47 @@ pub fn format(ms: i64, options: Option<Options>) -> String {
     }
 }
 
+/// Formatting tiers from largest to smallest: threshold in milliseconds,
+/// short suffix, and long unit name.
+const UNITS: [(f64, &str, &str); 7] = [
+    (Y, "y", "year"),
+    (MO, "mo", "month"),
+    (W, "w", "week"),
+    (D, "d", "day"),
+    (H, "h", "hour"),
+    (M, "m", "minute"),
+    (S, "s", "second"),
+];
+
 /// Short format for milliseconds
 fn fmt_short(ms: i64) -> String {
-    let ms_abs = ms.abs();
-    let ms_f64 = ms as f64;
-
-    if ms_abs >= Y as i64 {
-        format!("{}y", (ms_f64 / Y).round() as i64)
-    } else if ms_abs >= MO as i64 {
-        format!("{}mo", (ms_f64 / MO).round() as i64)
-    } else if ms_abs >= W as i64 {
-        format!("{}w", (ms_f64 / W).round() as i64)
-    } else if ms_abs >= D as i64 {
-        format!("{}d", (ms_f64 / D).round() as i64)
-    } else if ms_abs >= H as i64 {
-        format!("{}h", (ms_f64 / H).round() as i64)
-    } else if ms_abs >= M as i64 {
-        format!("{}m", (ms_f64 / M).round() as i64)
-    } else if ms_abs >= S as i64 {
-        format!("{}s", (ms_f64 / S).round() as i64)
-    } else {
-        format!("{}ms", ms)
-    }
+    fmt(ms, false)
 }
 
 /// Long format for milliseconds
 fn fmt_long(ms: i64) -> String {
-    let ms_abs = ms.abs();
+    fmt(ms, true)
+}
+
+/// Shared formatting loop for both short and long formats
+fn fmt(ms: i64, long: bool) -> String {
+    // unsigned_abs avoids the negation overflow of i64::MIN.abs()
+    let ms_abs = ms.unsigned_abs();
     let ms_f64 = ms as f64;
 
-    if ms_abs >= Y as i64 {
-        plural(ms_f64, ms_abs as f64, Y, "year")
-    } else if ms_abs >= MO as i64 {
-        plural(ms_f64, ms_abs as f64, MO, "month")
-    } else if ms_abs >= W as i64 {
-        plural(ms_f64, ms_abs as f64, W, "week")
-    } else if ms_abs >= D as i64 {
-        plural(ms_f64, ms_abs as f64, D, "day")
-    } else if ms_abs >= H as i64 {
-        plural(ms_f64, ms_abs as f64, H, "hour")
-    } else if ms_abs >= M as i64 {
-        plural(ms_f64, ms_abs as f64, M, "minute")
-    } else if ms_abs >= S as i64 {
-        plural(ms_f64, ms_abs as f64, S, "second")
-    } else {
+    for &(threshold, suffix, name) in &UNITS {
+        if ms_abs >= threshold as u64 {
+            return if long {
+                plural(ms_f64, ms_abs as f64, threshold, name)
+            } else {
+                format!("{}{}", (ms_f64 / threshold).round() as i64, suffix)
+            };
+        }
+    }
+    if long {
         format!("{} ms", ms)
+    } else {
+        format!("{}ms", ms)
     }
 }
 
