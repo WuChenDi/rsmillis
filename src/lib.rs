@@ -308,53 +308,47 @@ pub fn format(ms: i64, options: Option<Options>) -> String {
     }
 }
 
+/// Formatting tiers from largest to smallest: threshold in milliseconds,
+/// short suffix, and long unit name.
+const UNITS: [(f64, &str, &str); 7] = [
+    (Y, "y", "year"),
+    (MO, "mo", "month"),
+    (W, "w", "week"),
+    (D, "d", "day"),
+    (H, "h", "hour"),
+    (M, "m", "minute"),
+    (S, "s", "second"),
+];
+
 /// Short format for milliseconds
 fn fmt_short(ms: i64) -> String {
-    // unsigned_abs avoids the negation overflow of i64::MIN.abs()
-    let ms_abs = ms.unsigned_abs();
-    let ms_f64 = ms as f64;
-
-    if ms_abs >= Y as u64 {
-        format!("{}y", (ms_f64 / Y).round() as i64)
-    } else if ms_abs >= MO as u64 {
-        format!("{}mo", (ms_f64 / MO).round() as i64)
-    } else if ms_abs >= W as u64 {
-        format!("{}w", (ms_f64 / W).round() as i64)
-    } else if ms_abs >= D as u64 {
-        format!("{}d", (ms_f64 / D).round() as i64)
-    } else if ms_abs >= H as u64 {
-        format!("{}h", (ms_f64 / H).round() as i64)
-    } else if ms_abs >= M as u64 {
-        format!("{}m", (ms_f64 / M).round() as i64)
-    } else if ms_abs >= S as u64 {
-        format!("{}s", (ms_f64 / S).round() as i64)
-    } else {
-        format!("{}ms", ms)
-    }
+    fmt(ms, false)
 }
 
 /// Long format for milliseconds
 fn fmt_long(ms: i64) -> String {
+    fmt(ms, true)
+}
+
+/// Shared formatting loop for both short and long formats
+fn fmt(ms: i64, long: bool) -> String {
     // unsigned_abs avoids the negation overflow of i64::MIN.abs()
     let ms_abs = ms.unsigned_abs();
     let ms_f64 = ms as f64;
 
-    if ms_abs >= Y as u64 {
-        plural(ms_f64, ms_abs as f64, Y, "year")
-    } else if ms_abs >= MO as u64 {
-        plural(ms_f64, ms_abs as f64, MO, "month")
-    } else if ms_abs >= W as u64 {
-        plural(ms_f64, ms_abs as f64, W, "week")
-    } else if ms_abs >= D as u64 {
-        plural(ms_f64, ms_abs as f64, D, "day")
-    } else if ms_abs >= H as u64 {
-        plural(ms_f64, ms_abs as f64, H, "hour")
-    } else if ms_abs >= M as u64 {
-        plural(ms_f64, ms_abs as f64, M, "minute")
-    } else if ms_abs >= S as u64 {
-        plural(ms_f64, ms_abs as f64, S, "second")
-    } else {
+    for &(threshold, suffix, name) in &UNITS {
+        if ms_abs >= threshold as u64 {
+            return if long {
+                plural(ms_f64, ms_abs as f64, threshold, name)
+            } else {
+                format!("{}{}", (ms_f64 / threshold).round() as i64, suffix)
+            };
+        }
+    }
+    if long {
         format!("{} ms", ms)
+    } else {
+        format!("{}ms", ms)
     }
 }
 
