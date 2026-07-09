@@ -16,7 +16,7 @@
 //! assert_eq!(milliseconds, 86400000);
 //!
 //! // Format milliseconds
-//! let formatted = ms(60000).unwrap();
+//! let formatted = ms(60000);
 //! assert_eq!(formatted, "1m");
 //!
 //! // With long format - use format() function
@@ -97,12 +97,15 @@ impl ToMillis for String {
     }
 }
 
-/// Implementation for i64 - converts milliseconds to formatted string
+/// Implementation for i64 - converts milliseconds to formatted string.
+///
+/// This conversion is infallible and never panics, so it returns a plain
+/// `String` rather than a `Result`.
 impl ToMillis for i64 {
-    type Output = Result<String, Error>;
+    type Output = String;
 
-    fn to_millis(self) -> Result<String, Error> {
-        Ok(format(self, None))
+    fn to_millis(self) -> String {
+        format(self, None)
     }
 }
 
@@ -118,11 +121,12 @@ impl ToMillis for i64 {
 /// # Returns
 ///
 /// * `Result<i64, Error>` if input was a string (parsed to milliseconds)
-/// * `Result<String, Error>` if input was a number (formatted to time string)
+/// * `String` if input was an `i64` (formatted to a time string; this path
+///   is infallible and never panics)
 ///
 /// # Errors
 ///
-/// Returns an error if the value cannot be parsed or formatted.
+/// String inputs return an error if they cannot be parsed.
 ///
 /// # Examples
 ///
@@ -137,7 +141,7 @@ impl ToMillis for i64 {
 /// assert_eq!(milliseconds, 86400000);
 ///
 /// // Format milliseconds to string
-/// let formatted = ms(7200000).unwrap();
+/// let formatted = ms(7200000);
 /// assert_eq!(formatted, "2h");
 /// ```
 pub fn ms<T: ToMillis>(value: T) -> T::Output {
@@ -234,12 +238,40 @@ pub fn parse(s: &str) -> Result<i64, Error> {
 /// # Examples
 ///
 /// ```
+/// # #![allow(deprecated)]
 /// use millis::parse_strict;
 ///
 /// assert_eq!(parse_strict("2h").unwrap(), 7200000);
 /// ```
+#[deprecated(since = "2.0.0", note = "use parse()")]
 pub fn parse_strict(s: &str) -> Result<i64, Error> {
     parse(s)
+}
+
+/// Parse the given string and return a [`std::time::Duration`].
+///
+/// Accepts the same input as [`parse()`].
+///
+/// # Errors
+///
+/// Returns the same errors as [`parse()`]. Because `Duration` cannot
+/// represent negative spans, inputs that parse to a negative number of
+/// milliseconds return `Err(Error::InvalidFormat)`.
+///
+/// # Examples
+///
+/// ```
+/// use std::time::Duration;
+/// use millis::parse_duration;
+///
+/// assert_eq!(parse_duration("1.5s").unwrap(), Duration::from_millis(1500));
+/// assert_eq!(parse_duration("2h").unwrap(), Duration::from_millis(7200000));
+/// assert!(parse_duration("-1h").is_err());
+/// ```
+pub fn parse_duration(s: &str) -> Result<std::time::Duration, Error> {
+    let ms = parse(s)?;
+    let ms = u64::try_from(ms).map_err(|_| Error::InvalidFormat)?;
+    Ok(std::time::Duration::from_millis(ms))
 }
 
 /// Format the given milliseconds as a string.

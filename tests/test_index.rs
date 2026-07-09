@@ -222,81 +222,72 @@ mod tests {
         #[test]
         fn should_support_milliseconds() {
             // should support milliseconds
-            assert_eq!(ms(500).unwrap(), "500ms");
-            assert_eq!(ms(-500).unwrap(), "-500ms");
+            assert_eq!(ms(500), "500ms");
+            assert_eq!(ms(-500), "-500ms");
         }
 
         #[test]
         fn should_support_seconds() {
             // should support seconds
-            assert_eq!(ms(1000).unwrap(), "1s");
-            assert_eq!(ms(10000).unwrap(), "10s");
+            assert_eq!(ms(1000), "1s");
+            assert_eq!(ms(10000), "10s");
 
-            assert_eq!(ms(-1000).unwrap(), "-1s");
-            assert_eq!(ms(-10000).unwrap(), "-10s");
+            assert_eq!(ms(-1000), "-1s");
+            assert_eq!(ms(-10000), "-10s");
         }
 
         #[test]
         fn should_support_minutes() {
             // should support minutes
-            assert_eq!(ms(60 * 1000).unwrap(), "1m");
-            assert_eq!(ms(60 * 10000).unwrap(), "10m");
+            assert_eq!(ms(60 * 1000), "1m");
+            assert_eq!(ms(60 * 10000), "10m");
 
-            assert_eq!(ms(-1 * 60 * 1000).unwrap(), "-1m");
-            assert_eq!(ms(-1 * 60 * 10000).unwrap(), "-10m");
+            assert_eq!(ms(-1 * 60 * 1000), "-1m");
+            assert_eq!(ms(-1 * 60 * 10000), "-10m");
         }
 
         #[test]
         fn should_support_hours() {
             // should support hours
-            assert_eq!(ms(60 * 60 * 1000).unwrap(), "1h");
-            assert_eq!(ms(60 * 60 * 10000).unwrap(), "10h");
+            assert_eq!(ms(60 * 60 * 1000), "1h");
+            assert_eq!(ms(60 * 60 * 10000), "10h");
 
-            assert_eq!(ms(-1 * 60 * 60 * 1000).unwrap(), "-1h");
-            assert_eq!(ms(-1 * 60 * 60 * 10000).unwrap(), "-10h");
+            assert_eq!(ms(-1 * 60 * 60 * 1000), "-1h");
+            assert_eq!(ms(-1 * 60 * 60 * 10000), "-10h");
         }
 
         #[test]
         fn should_support_days() {
             // should support days
-            assert_eq!(ms(24 * 60 * 60 * 1000).unwrap(), "1d");
-            assert_eq!(ms(24 * 60 * 60 * 6000).unwrap(), "6d");
+            assert_eq!(ms(24 * 60 * 60 * 1000), "1d");
+            assert_eq!(ms(24 * 60 * 60 * 6000), "6d");
 
-            assert_eq!(ms(-1 * 24 * 60 * 60 * 1000).unwrap(), "-1d");
-            assert_eq!(ms(-1 * 24 * 60 * 60 * 6000).unwrap(), "-6d");
+            assert_eq!(ms(-1 * 24 * 60 * 60 * 1000), "-1d");
+            assert_eq!(ms(-1 * 24 * 60 * 60 * 6000), "-6d");
         }
 
         #[test]
         fn should_support_weeks() {
             // should support weeks
-            assert_eq!(ms(1 * 7 * 24 * 60 * 60 * 1000).unwrap(), "1w");
-            assert_eq!(ms(2 * 7 * 24 * 60 * 60 * 1000).unwrap(), "2w");
+            assert_eq!(ms(1 * 7 * 24 * 60 * 60 * 1000), "1w");
+            assert_eq!(ms(2 * 7 * 24 * 60 * 60 * 1000), "2w");
 
-            assert_eq!(ms(-1 * 1 * 7 * 24 * 60 * 60 * 1000).unwrap(), "-1w");
-            assert_eq!(ms(-1 * 2 * 7 * 24 * 60 * 60 * 1000).unwrap(), "-2w");
+            assert_eq!(ms(-1 * 1 * 7 * 24 * 60 * 60 * 1000), "-1w");
+            assert_eq!(ms(-1 * 2 * 7 * 24 * 60 * 60 * 1000), "-2w");
         }
 
         #[test]
         fn should_support_months() {
             // should support months
             let one_month = (30.4375 * 24.0 * 60.0 * 60.0 * 1000.0) as i64;
-            assert_eq!(ms(one_month).unwrap(), "1mo");
-            assert_eq!(
-                ms((30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64).unwrap(),
-                "1mo"
-            );
-            assert_eq!(
-                ms((30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64).unwrap(),
-                "10mo"
-            );
+            assert_eq!(ms(one_month), "1mo");
+            assert_eq!(ms((30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64), "1mo");
+            assert_eq!(ms((30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64), "10mo");
 
-            assert_eq!(ms(-one_month).unwrap(), "-1mo");
+            assert_eq!(ms(-one_month), "-1mo");
+            assert_eq!(ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64), "-1mo");
             assert_eq!(
-                ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 1200.0) as i64).unwrap(),
-                "-1mo"
-            );
-            assert_eq!(
-                ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64).unwrap(),
+                ms(-(30.4375 * 24.0 * 60.0 * 60.0 * 10000.0) as i64),
                 "-10mo"
             );
         }
@@ -305,23 +296,20 @@ mod tests {
         fn should_support_years() {
             // should support years
             let one_year = (365.25 * 24.0 * 60.0 * 60.0 * 1000.0) as i64 + 1;
-            assert_eq!(ms(one_year).unwrap(), "1y");
+            assert_eq!(ms(one_year), "1y");
+            assert_eq!(ms((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1), "1y");
             assert_eq!(
-                ms((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1).unwrap(),
-                "1y"
-            );
-            assert_eq!(
-                ms((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1).unwrap(),
+                ms((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1),
                 "10y"
             );
 
-            assert_eq!(ms(-one_year).unwrap(), "-1y");
+            assert_eq!(ms(-one_year), "-1y");
             assert_eq!(
-                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1)).unwrap(),
+                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 1200.0) as i64 + 1)),
                 "-1y"
             );
             assert_eq!(
-                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1)).unwrap(),
+                ms(-((365.25 * 24.0 * 60.0 * 60.0 * 10000.0) as i64 + 1)),
                 "-10y"
             );
         }
@@ -329,8 +317,8 @@ mod tests {
         #[test]
         fn should_round() {
             // should round
-            assert_eq!(ms(234234234).unwrap(), "3d");
-            assert_eq!(ms(-234234234).unwrap(), "-3d");
+            assert_eq!(ms(234234234), "3d");
+            assert_eq!(ms(-234234234), "-3d");
         }
     }
 
