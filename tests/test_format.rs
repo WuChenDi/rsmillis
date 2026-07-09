@@ -1,3 +1,6 @@
+// Tests spell out durations as readable products like `2 * 7 * 24 * 60 * 60 * 1000`.
+#![allow(clippy::identity_op, clippy::neg_multiply)]
+
 use millis::{Options, format};
 
 #[cfg(test)]
